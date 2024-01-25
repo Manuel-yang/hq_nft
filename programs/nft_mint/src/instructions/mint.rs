@@ -8,12 +8,11 @@ use solana_program::sysvar;
 use mpl_candy_guard::cpi::accounts::MintV2;
 use anchor_spl::token;
 use anchor_spl::associated_token;
-use crate::constants;
 use crate::AdminPda;
 use crate::error::ErrorCode;
 
 pub fn mint(ctx: Context<MintNft>) -> Result<()> {
-    require!(ctx.accounts.admin.key().to_string() == constants::ADMIN_ADDRESS, ErrorCode::InvalidCall);
+    require!(ctx.accounts.admin.is_signer && ctx.accounts.admin.key() == ctx.accounts.program_admin_pda.admin.key() , ErrorCode::InvalidCall);
     let _ = cpi_mint(ctx);
     Ok(())
 }
@@ -54,7 +53,7 @@ associated_token::create(
       associated_token::Create {
           payer: ctx.accounts.payer.to_account_info(),
           associated_token: ctx.accounts.token_account.to_account_info(),
-          authority: ctx.accounts.ata_user.to_account_info(),
+          authority: ctx.accounts.payer.to_account_info(),
           mint: ctx.accounts.minter_authority.to_account_info(),
           system_program: ctx.accounts.system_program.to_account_info(),
           token_program: ctx.accounts.token_program.to_account_info(),
@@ -75,10 +74,10 @@ token::mint_to(
   1,
 )?;
 
-let admin = &ctx.accounts.program_admin_pda;
+let program_admin_pda = &ctx.accounts.program_admin_pda;
 let AdminPda {
   program_pda_bump, ..
-} =  **admin;
+} =  **program_admin_pda;
 
 let program_pda_seed = &[
   &b"program_admin_pda"[..],
@@ -88,7 +87,7 @@ let program_pda_seed = &[
 let binding = &[&program_pda_seed[..]];
 let cpi = ctx.accounts.cpi_invoke().with_signer(binding);
 
-mpl_candy_guard::cpi::mint_v2(cpi, vec![0], Some("SEQNA".to_string()))?;
+mpl_candy_guard::cpi::mint_v2(cpi, vec![0], Some("HQNFTT".to_string()))?;
 
 Ok(())
 }
@@ -106,6 +105,7 @@ pub struct MintNft<'info> {
   )]
   pub program_admin_pda: Account<'info, AdminPda>,
 
+  #[account(mut)]
   pub admin: Signer<'info>,
 
 
@@ -127,11 +127,6 @@ pub struct MintNft<'info> {
   /// Candy machine account.
   #[account(mut, constraint = candy_guard.key() == candy_machine.mint_authority)]
   pub candy_machine: Box<Account<'info, CandyMachine>>,
-
-  // authority of nft ata
-  /// CHECK: account constraints checked in account trait
-  #[account(mut)]
-  pub ata_user: AccountInfo<'info>,
 
   /// Candy Machine authority account.
   ///
@@ -236,33 +231,33 @@ pub struct MintNft<'info> {
 
 impl<'info> MintNft<'info> {
   pub fn cpi_invoke(&self) -> CpiContext<'_, '_, '_, 'info, MintV2<'info>> {
-    let cpi_accounts = MintV2 {
-      candy_guard: self.candy_guard.to_account_info(),
-      candy_machine_program: self.candy_machine_program.to_account_info(),
-      candy_machine: self.candy_machine.to_account_info(),
-      candy_machine_authority_pda: self.candy_machine_authority_pda.to_account_info(),
-      payer: self.payer.to_account_info(),
-      minter: self.admin.to_account_info(),
-      nft_mint: self.nft_mint.to_account_info(),
-      nft_mint_authority: self.nft_mint_authority.to_account_info(),
-      nft_metadata: self.nft_metadata.to_account_info(),
-      nft_master_edition: self.nft_master_edition.to_account_info(),
-      token: None,
-      token_record: None,
-      collection_delegate_record: self.collection_delegate_record.to_account_info(),
-      collection_mint: self.collection_mint.to_account_info(),
-      collection_metadata: self.collection_metadata.to_account_info(),
-      collection_master_edition: self.collection_master_edition.to_account_info(),
-      collection_update_authority: self.collection_update_authority.to_account_info(),
-      token_metadata_program: self.token_metadata_program.to_account_info(),
-      spl_ata_program: None,
-      spl_token_program: self.token_program.to_account_info(),
-      system_program: self.system_program.to_account_info(),
-      sysvar_instructions: self.sysvar_instructions.to_account_info(),
-      recent_slothashes: self.recent_slothashes.to_account_info(),
-      authorization_rules: None,
-      authorization_rules_program: None,
-    };
-    CpiContext::new(self.candy_guard_program.to_account_info(), cpi_accounts)
+      let cpi_accounts = MintV2 {
+          candy_guard: self.candy_guard.to_account_info(),
+          candy_machine_program: self.candy_machine_program.to_account_info(),
+          candy_machine: self.candy_machine.to_account_info(),
+          candy_machine_authority_pda: self.candy_machine_authority_pda.to_account_info(),
+          payer: self.payer.to_account_info(),
+          minter: self.program_admin_pda.to_account_info(),
+          nft_mint: self.nft_mint.to_account_info(),
+          nft_mint_authority: self.nft_mint_authority.to_account_info(),
+          nft_metadata: self.nft_metadata.to_account_info(),
+          nft_master_edition: self.nft_master_edition.to_account_info(),
+          token: None,
+          token_record: None,
+          collection_delegate_record: self.collection_delegate_record.to_account_info(),
+          collection_mint: self.collection_mint.to_account_info(),
+          collection_metadata: self.collection_metadata.to_account_info(),
+          collection_master_edition: self.collection_master_edition.to_account_info(),
+          collection_update_authority: self.collection_update_authority.to_account_info(),
+          token_metadata_program: self.token_metadata_program.to_account_info(),
+          spl_ata_program: None,
+          spl_token_program: self.token_program.to_account_info(),
+          system_program: self.system_program.to_account_info(),
+          sysvar_instructions: self.sysvar_instructions.to_account_info(),
+          recent_slothashes: self.recent_slothashes.to_account_info(),
+          authorization_rules: None,
+          authorization_rules_program: None,
+      };
+      CpiContext::new(self.candy_guard_program.to_account_info(), cpi_accounts)
   }
 }

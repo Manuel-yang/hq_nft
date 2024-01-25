@@ -1,1 +1,1 @@
-pub const ADMIN_ADDRESS: &str = "DdKWZHP8p8G5Jkm8n3XtD2hh8zynpjQL8Sj5PhciQuD4";
+pub const ADMIN_ADDRESS: &str = "5tu9VQ9sGyADkBtdFHGX9icTjbsv1rhMhSt87Bk27yjb";

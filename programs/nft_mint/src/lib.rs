@@ -7,7 +7,7 @@ pub mod state;
 use instructions::*;
 use state::*;
 
-declare_id!("42xKcQ797Xm3qygyRErM4R6xAVpC3aCPuCCNEJznKgwo");
+declare_id!("CUdrh7HLaAkNvcaDZhtmkCBxe3GjqW7ELEK9s13SJQ5y");
 
 #[program]
 pub mod nft_mint {

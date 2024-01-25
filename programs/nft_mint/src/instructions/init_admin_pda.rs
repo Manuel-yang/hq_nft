@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 
 pub fn init_admin_pda(ctx: Context<InitAdminPda>, admin: Pubkey) -> Result<()> {
     let admin = admin;
-    let program_pda = &mut ctx.accounts.admin_pda;
+    let program_pda = &mut ctx.accounts.program_admin_pda;
 
     let program_pda_bump = *ctx
       .bumps
@@ -30,6 +30,6 @@ pub struct InitAdminPda<'info> {
     ],
     bump
   )]
-  pub admin_pda: Account<'info, AdminPda>,
+  pub program_admin_pda: Account<'info, AdminPda>,
   pub system_program: Program<'info, System>,
 }

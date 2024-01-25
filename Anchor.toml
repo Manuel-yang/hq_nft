@@ -1,14 +1,14 @@
 [features]
 seeds = false
 skip-lint = false
-[programs.localnet]
-nft_mint = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+[programs.devnet]
+nft_mint = "CUdrh7HLaAkNvcaDZhtmkCBxe3GjqW7ELEK9s13SJQ5y"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "/Users/yanaemons/.config/solana/id.json"
 
 [scripts]
