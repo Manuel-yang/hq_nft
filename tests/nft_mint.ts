@@ -94,7 +94,7 @@ describe("nft_mint", () => {
     const provider = await createProvider(testNodeWallet)
     const program = await createProgram(provider)
     const adminPda = await getProgramAdminPda(program.programId)
-    const umi = createUmi("https://api.devnet.solana.com").use(mplCandyMachine());
+    const umi = createUmi(process.env.RPC_URL).use(mplCandyMachine());
 
     const candyGuardAddress = findCandyGuardPda(umi, { base: publicKey(CANDY_MACHINE) });
     const candyMachineAuthorityPda = await getCandyMachineAuthorityPda(CANDY_MACHINE)
