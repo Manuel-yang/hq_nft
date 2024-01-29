@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { getWallet, createProvider, createProgram, getProgramAdminPda } from "../migrations/utils";
+import { getWallet, createProvider, createProgram, getProgramAdminPda, createConnection } from "../migrations/utils";
 import { CANDY_GUARD_PROGRAM_ID, CANDY_MACHINE_PROGRAM_ID, CANDY_MACHINE, COLLECTION_ID, TOKEN_METADATA_PROGRAM_ID, SPL_TOKEN_PROGRAM_ID, SPL_ATA_PROGRAM_ID, ADMIN_ADDRESS } from "./CONSTANTS";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { findCandyGuardPda, mplCandyMachine } from "@metaplex-foundation/mpl-candy-machine";
@@ -10,9 +10,9 @@ import { Transaction } from "@solana/web3.js";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { PublicKey } from "@metaplex-foundation/js";
 
-async function generateTx(userAddress: PublicKey): Promise<Transaction> {
-
+export async function generateTx(userAddress: PublicKey): Promise<Transaction> {
   const [nodeWallet, adminWallet] = await getWallet(process.env.PRIVATE_KEY)
+  // const [testNodeWallet, _] = await getWallet(process.env.PRIVATE_KEY_TEST)
   const provider = await createProvider(nodeWallet)
   const program = await createProgram(provider)
   const adminPda = await getProgramAdminPda(program.programId)
@@ -27,12 +27,11 @@ async function generateTx(userAddress: PublicKey): Promise<Transaction> {
   const collectionDelegateRecord = await getCollectionDelegateRecordPda(candyMachineAuthorityPda[0])
   const collectionMetadata = await getMetadataPDA(COLLECTION_ID)
   const collectionMasterEdition = await getMasterEditionPDA(COLLECTION_ID)
-  const instruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ // 设置计算单元
+  const instruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({
     units: 500_000,
     });
 
   try {
-    // generate the instruction
     const mintIns = await program.methods.mint()
     .accounts({
         programAdminPda: adminPda,
@@ -63,34 +62,31 @@ async function generateTx(userAddress: PublicKey): Promise<Transaction> {
     })
     .instruction()
     
-    const blockhash = await provider.connection.getLatestBlockhash()
     let tx = new Transaction()
     tx.add(instruction)
-    tx.feePayer = userAddress
-    tx.recentBlockhash = blockhash.blockhash
-    tx.lastValidBlockHeight = blockhash.lastValidBlockHeight
     tx.add(mintIns)
+    tx.feePayer = userAddress
 
-    // admin sign the tx
-    tx = await nodeWallet.signTransaction(tx)
-    
+    // set block hash for tx
+    const connection = await createConnection()
+    tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+  
     // use mint keypair to sign
     const mintPk = await bs58.encode(mintKeypair.secretKey) 
-    const [mintPkNodeWallet, _] = await getWallet(mintPk)
+    const [mintPkNodeWallet, mintPkWallet] = await getWallet(mintPk)
     tx = await mintPkNodeWallet.signTransaction(tx)
 
     // use admin wallet to sign
     tx = await nodeWallet.signTransaction(tx)
 
     return tx
-  }catch(e: any) {
-    console.log(e)
-  }
+    }catch(e: any) {
+      console.log(e)
+    }
 }
 
-async function main() {
-  let res = await generateTx(new PublicKey("6qQDCEjgvmiDatKVr8Lm2vmNW3cwHdTZ4ytWx6GWXSaR"))
-  console.log(res)
-}
+// async function main() {
+//   await generateTx(new PublicKey("6qQDCEjgvmiDatKVr8Lm2vmNW3cwHdTZ4ytWx6GWXSaR"))
+// }
 
-main()
+// main()

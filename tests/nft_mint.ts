@@ -160,8 +160,8 @@ describe("nft_mint", () => {
       tx = await nodeWallet.signTransaction(tx)
 
       // use test user provider to send tx
-      await provider.sendAndConfirm(tx)
-
+      let res = await provider.sendAndConfirm(tx)
+      console.log(res)
       // assert.equal(res.value.err, null)
       }catch(e: any) {
       console.log(e)
